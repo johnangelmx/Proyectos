@@ -1,18 +1,14 @@
 const express = require('express');
+const fs = require('fs');
 const app = express();
 
-// Lista de productos
-let productos = [{
-    id: 1,
-    corte: 'Ribeye',
-    marca: 'Kagura',
-    calidad: 'A5',
-    origen: 'Japón',
-    precio: 5750,
-    gramos: 100,
-    imagen: 'https://asset.cloudinary.com/dfqznh5nf/9a741e280bfa5e2e11da9dbfb3f84e40',
-    descripcion: 'El preferido de muchos por su gran sabor y suavidad. El Rib-Eye es un corte que abarca la parte superior de la costilla y la carne incluida en ambos lados de la misma. Este corte va desde la costilla 5 a la 12.',
-}, ];
+// Cargar los datos del archivo JSON
+const productosFile = './productos.json';
+let productos = [];
+if (fs.existsSync(productosFile)) {
+    const data = fs.readFileSync(productosFile);
+    productos = JSON.parse(data);
+}
 
 // Middleware para permitir el uso del cuerpo de la solicitud en formato JSON
 app.use(express.json());
@@ -40,6 +36,7 @@ app.post('/productos', (req, res) => {
     const producto = req.body;
     producto.id = productos.length + 1;
     productos.push(producto);
+    guardarProductos();
     res.status(201).json(producto);
 });
 
@@ -55,6 +52,7 @@ app.put('/productos/:id', (req, res) => {
         const updatedProducto = req.body;
         updatedProducto.id = id;
         productos[productoIndex] = updatedProducto;
+        guardarProductos();
         res.json(updatedProducto);
     }
 });
@@ -69,9 +67,15 @@ app.delete('/productos/:id', (req, res) => {
         });
     } else {
         productos.splice(productoIndex, 1);
+        guardarProductos();
         res.sendStatus(204);
     }
 });
+
+// Función para guardar los datos en el archivo JSON
+function guardarProductos() {
+    fs.writeFileSync(productosFile, JSON.stringify(productos, null, 2));
+}
 
 // Puerto en el que escuchará la aplicación
 const port = 3000;
